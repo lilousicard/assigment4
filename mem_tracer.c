@@ -4,14 +4,14 @@
 #include <stdarg.h>
 
 /**
- *//CS149 assignment#4 helper code.
- *// See the TODO's in the comments below! You need to implement those.
+ *CS149 assignment#4 helper code.
+ *See the TODO's in the comments below! You need to implement those.
 **/
 
 /**
- *// TRACE_NODE_STRUCT is a linked list of
- *// pointers to function identifiers
- *// TRACE_TOP is the head of the list is the top of the stack
+ * TRACE_NODE_STRUCT is a linked list of
+ * pointers to function identifiers
+ * TRACE_TOP is the head of the list is the top of the stack
 **/
 struct TRACE_NODE_STRUCT {
   char* functionid;                // ptr to function identifier (a function name)
