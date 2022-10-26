@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-
+#include <fcntl.h>
+#include <unistd.h>
 /**
  *CS149 assignment#4 helper code.
  *See the TODO's in the comments below! You need to implement those.
@@ -126,7 +127,10 @@ char* PRINT_TRACE()
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void* REALLOC(void* p,int t,char* file,int line)
 {
+        PUSH_TRACE("REALLOC");
+        printf("%s\n",PRINT_TRACE());
 	p = realloc(p,t);
+        POP_TRACE();
 	return p;
 }
 
@@ -139,8 +143,11 @@ void* REALLOC(void* p,int t,char* file,int line)
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void* MALLOC(int t,char* file,int line)
 {
+        PUSH_TRACE("MALLOC");
+        printf("%s\n",PRINT_TRACE());
 	void* p;
 	p = malloc(t);
+	POP_TRACE();
 	return p;
 }
 
@@ -153,7 +160,10 @@ void* MALLOC(int t,char* file,int line)
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void FREE(void* p,char* file,int line)
 {
+	PUSH_TRACE("FREE");
+	printf("%s\n",PRINT_TRACE());
 	free(p);
+	POP_TRACE();
 }
 
 #define realloc(a,b) REALLOC(a,b,__FILE__,__LINE__)
@@ -226,6 +236,9 @@ void make_extend_array()
 // function main
 int main()
 {
+        int fd;
+        fd = open ("memtrace.out",O_RDWR|O_CREAT|O_APPEND,0777);
+    	dup2(fd, 1);
         PUSH_TRACE("main");
 
 	make_extend_array();
