@@ -4,10 +4,6 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <unistd.h>
-/**
- *CS149 assignment#4 helper code.
- *See the TODO's in the comments below! You need to implement those.
-**/
 
 /**
  * TRACE_NODE_STRUCT is a linked list of
@@ -119,49 +115,40 @@ char* PRINT_TRACE()
 } /*end PRINT_TRACE*/
 
 // -----------------------------------------
-// function REALLOC calls realloc
-// TODO REALLOC should also print info about memory usage.
-// TODO For this purpose, you need to add a few lines to this function.
-// For instance, example of print out:
+// function REALLOC calls realloc and print the following line
 // "File tracemem.c, line X, function F reallocated the memory segment at address A to a new size S"
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void* REALLOC(void* p,int t,char* file,int line)
 {
         PUSH_TRACE("REALLOC");
-        printf("%s\n",PRINT_TRACE());
+        printf("File %s, line %d, function %s reallocated the memory segament at address %p to a new size %d\n",file, line, PRINT_TRACE(),p,t);
 	p = realloc(p,t);
         POP_TRACE();
 	return p;
 }
 
 // -------------------------------------------
-// function MALLOC calls malloc
-// TODO MALLOC should also print info about memory usage.
-// TODO For this purpose, you need to add a few lines to this function.
-// For instance, example of print out:
+// function MALLOC calls malloc and print the following line
 // "File tracemem.c, line X, function F allocated new memory segment at address A to size S"
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void* MALLOC(int t,char* file,int line)
 {
         PUSH_TRACE("MALLOC");
-        printf("%s\n",PRINT_TRACE());
 	void* p;
 	p = malloc(t);
+        printf("File %s, line %d, function %s allocated new memory segment at address %p to of size %d\n", file, line, PRINT_TRACE(),p,t);
 	POP_TRACE();
 	return p;
 }
 
 // ----------------------------------------------
-// function FREE calls free
-// TODO FREE should also print info about memory usage.
-// TODO For this purpose, you need to add a few lines to this function.
-// For instance, example of print out:
+// function FREE calls free and print the following line
 // "File tracemem.c, line X, function F deallocated the memory segment at address A"
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void FREE(void* p,char* file,int line)
 {
 	PUSH_TRACE("FREE");
-	printf("%s\n",PRINT_TRACE());
+	printf("File %s, line %d, function %s deallocated the memory segment at address %p \n",file,line,PRINT_TRACE(),p);
 	free(p);
 	POP_TRACE();
 }
@@ -195,40 +182,38 @@ int add_column(int** array,int rows,int columns)
 // This function is intended to demonstrate how memory usage tracing of malloc and free is done
 void make_extend_array()
 {
-       PUSH_TRACE("make_extend_array");
-	int i, j;
-        int **array;
-        int ROW = 4;
-        int COL = 3;
+        PUSH_TRACE("make_extend_array");
+        size_t buff = 100;
+        char **array;
+        int ROW = 10;
+	int index = 0;
+        char *input = (char*)malloc(sizeof(char)*buff);
+	array = (char**)malloc(sizeof(char*)*ROW);
+        
 
-        //make array
-	array = (int**) malloc(sizeof(int*)*4);  // 4 rows
-	for(i=0; i<ROW; i++) {
-	 array[i]=(int*) malloc(sizeof(int)*3);  // 3 columns
-	 for(j=0; j<COL; j++)
-	  array[i][j]=10*i+j;
-	}//for
+        //Read all the input available to store them
+        while(getline(&input,&buff,stdin) != -1){
+                input[strlen(input)-1]=0;
+                array[index] = strdup(input);
+                index++;
+                //if the space allocated to store all the string is insufficent
+                //we need to reallocate the memory
+                if (index >= ROW){
+                        ROW+=10;
+                        array = realloc(array,sizeof(char*)*ROW);
+                }//End of if condition 
+        }//End of While loop
 
-        //display array
-	for(i=0; i<ROW; i++)
-	 for(j=0; j<COL; j++)
-	  printf("array[%d][%d]=%d\n",i,j,array[i][j]);
-
-	// and a new column
-	int NEWCOL = add_column(array,ROW,COL);
-
-	// now display the array again
-        for(i=0; i<ROW; i++)
-	 for(j=0; j<NEWCOL; j++)
-	  printf("array[%d][%d]=%d\n",i,j,array[i][j]);
-
-	 //now deallocate it
-	 for(i=0; i<ROW; i++)
-		 free((void*)array[i]);
-	 free((void*)array);
-
-	 POP_TRACE();
-         return;
+        //This for loop free all the string stored in the char** array
+        for(int i = 0; i<index; i++){
+                free(array[i]);
+        }
+	
+        //free the remaining allocated memory space
+        free(array);
+        free(input);
+	POP_TRACE();
+        return;
 }//end make_extend_array
 
 
