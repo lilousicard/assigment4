@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+
 /**
  * TRACE_NODE_STRUCT is a linked list of
  * pointers to function identifiers
@@ -119,12 +120,10 @@ char* PRINT_TRACE()
 // "File tracemem.c, line X, function F reallocated the memory segment at address A to a new size S"
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void* REALLOC(void* p,int t,char* file,int line)
-{
-        PUSH_TRACE("REALLOC");
+{       
         printf("File %s, line %d, function %s reallocated the memory segament at address %p to a new size %d\n",file, line, PRINT_TRACE(),p,t);
-	p = realloc(p,t);
-        POP_TRACE();
-	return p;
+        p = realloc(p,t);
+        return p;
 }
 
 // -------------------------------------------
@@ -133,12 +132,10 @@ void* REALLOC(void* p,int t,char* file,int line)
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void* MALLOC(int t,char* file,int line)
 {
-        PUSH_TRACE("MALLOC");
-	void* p;
-	p = malloc(t);
+        void* p;
+        p = malloc(t);
         printf("File %s, line %d, function %s allocated new memory segment at address %p to of size %d\n", file, line, PRINT_TRACE(),p,t);
-	POP_TRACE();
-	return p;
+        return p;
 }
 
 // ----------------------------------------------
@@ -147,15 +144,14 @@ void* MALLOC(int t,char* file,int line)
 // Information about the function F should be printed by printing the stack (use PRINT_TRACE)
 void FREE(void* p,char* file,int line)
 {
-	PUSH_TRACE("FREE");
-	printf("File %s, line %d, function %s deallocated the memory segment at address %p \n",file,line,PRINT_TRACE(),p);
-	free(p);
-	POP_TRACE();
+        printf("File %s, line %d, function %s deallocated the memory segment at address %p \n",file,line,PRINT_TRACE(),p);
+        free(p);
 }
 
 #define realloc(a,b) REALLOC(a,b,__FILE__,__LINE__)
 #define malloc(a) MALLOC(a,__FILE__,__LINE__)
 #define free(a) FREE(a,__FILE__,__LINE__)
+
 
 
 // -----------------------------------------
@@ -175,11 +171,80 @@ int add_column(int** array,int rows,int columns)
         return (columns+1);
 }// end add_column
 
+/**
+ * STRING_NODE_STRUCT is a linked list of
+ * pointers to an input string
+ * and the index of that input
+ * LL_TOP is the head of the list and the top of the stack
+**/
+
+struct STRING_NODE {
+  char* string;
+  int index;
+  struct STRING_NODE* next;
+};
+static struct STRING_NODE* LL_TOP = NULL;       // ptr to the top of the stack
+
+/* --------------------------------*/
+/* function PUSH_STRING */
+void PUSH_STRING(char* string, int index){
+        PUSH_TRACE("PUSH_STRING");
+        struct STRING_NODE* tnode;
+        tnode = (struct STRING_NODE*)malloc(sizeof(struct STRING_NODE));
+        tnode -> string = string;
+        tnode -> index = index;
+        if (LL_TOP == NULL){
+                LL_TOP = tnode;
+        }
+        else{
+               tnode -> next = LL_TOP;
+               LL_TOP = tnode;
+        }
+	POP_TRACE();
+}
+/* --------------------------------*/
+/* function POP_STRING */
+void POP_STRING(){
+        PUSH_TRACE("POP_STRING");
+        struct STRING_NODE* tnode;
+        tnode = LL_TOP;
+        LL_TOP = tnode->next;
+        free(tnode); 
+        POP_TRACE();
+}
+
+/* --------------------------------*/
+/* function FREE_LL_STRING */
+
+void FREE_LL_STRING(struct STRING_NODE* node){
+        PUSH_TRACE("FREE_LL_STRING");
+        while(LL_TOP->next != NULL){
+                POP_STRING();
+        }
+        POP_STRING();
+        POP_TRACE();
+}
+
+/* --------------------------------*/
+/* function Print_STRING */
+void print_String(struct STRING_NODE* node){
+        PUSH_TRACE("print_String");
+        if (node->next != NULL){
+                print_String(node->next);
+        }
+        printf("array[%d] = %s\n", node->index, node->string);
+	POP_TRACE();	
+}
+
 
 // ------------------------------------------
 // function make_extend_array
 // Example of how the memory trace is done
 // This function is intended to demonstrate how memory usage tracing of malloc and free is done
+//Please read: On Discord, Channel a4,on 10/14/2022 at 13:33, ProfB Mentioned 
+//"Else, you can assume commands will have a 100 character limit (they wont be tested on more than 100 chars). 
+// The bash shell cmd line also has a limit to the length of the commands it can read"
+//This is why size_T buff is set to 100
 void make_extend_array()
 {
         PUSH_TRACE("make_extend_array");
@@ -195,6 +260,10 @@ void make_extend_array()
         while(getline(&input,&buff,stdin) != -1){
                 input[strlen(input)-1]=0;
                 array[index] = strdup(input);
+                printf("File mem_tracer.c, line %d, function %s allocated new memory segment at address %p to of size %lu\n",__LINE__ -1 ,PRINT_TRACE(),array[index],sizeof(char)*buff);
+                
+                PUSH_STRING(array[index],index);
+
                 index++;
                 //if the space allocated to store all the string is insufficent
                 //we need to reallocate the memory
@@ -204,6 +273,8 @@ void make_extend_array()
                 }//End of if condition 
         }//End of While loop
 
+        print_String(LL_TOP);
+        FREE_LL_STRING(LL_TOP);
         //This for loop free all the string stored in the char** array
         for(int i = 0; i<index; i++){
                 free(array[i]);
