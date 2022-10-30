@@ -9,6 +9,8 @@
  * TRACE_NODE_STRUCT is a linked list of
  * pointers to function identifiers
  * TRACE_TOP is the head of the list is the top of the stack
+ * Please note that an output to the file memtrace.out is written any time
+ * a TRACE_NODE_STRUCT is allocated, reallocated, or free
 **/
 struct TRACE_NODE_STRUCT {
     char *functionid;                // ptr to function identifier (a function name)
@@ -236,6 +238,19 @@ void print_String(struct STRING_NODE *node) {
     POP_TRACE();
 }
 
+void ADD_SPACE(char** array, int row){
+    PUSH_TRACE("ADD_SPACE");
+    array = realloc(array, sizeof(char *) * row);
+    POP_TRACE();
+}
+
+void FREE_STRING_IN_ARRAY(char** array, int index){
+    PUSH_TRACE("FREE_STRING_IN_ARRAY");
+    for (int i = 0; i < index; i++) {
+        free(array[i]);
+    }
+    POP_TRACE();
+}
 
 // ------------------------------------------
 // function make_extend_array
@@ -269,16 +284,14 @@ void make_extend_array() {
         //we need to reallocate the memory
         if (index >= ROW) {
             ROW += 10;
-            array = realloc(array, sizeof(char *) * ROW);
+            ADD_SPACE(array,ROW);
         }//End of if condition
     }//End of While loop
 
     print_String(LL_TOP);
     FREE_LL_STRING();
     //This for loop free all the string stored in the char** array
-    for (int i = 0; i < index; i++) {
-        free(array[i]);
-    }
+    FREE_STRING_IN_ARRAY(array,index);
 
     //free the remaining allocated memory space
     free(array);
@@ -292,7 +305,7 @@ void make_extend_array() {
 // function main
 int main() {
     int fd;
-    fd = open("memtrace.out", O_RDWR | O_CREAT | O_APPEND, 0777);
+    fd = open("memtrace.out", O_RDWR | O_CREAT | O_TRUNC|O_APPEND, 0777);
     dup2(fd, 1);
     PUSH_TRACE("main");
 
