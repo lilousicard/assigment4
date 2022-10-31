@@ -190,6 +190,13 @@ static struct STRING_NODE *LL_TOP = NULL;       // ptr to the top of the stack
 
 /* --------------------------------*/
 /* function PUSH_STRING */
+/**
+ * The function PUSH_STRING is use to create a new STRING_NODE
+ * That will become the top of the stack. It malloc the size
+ * of a node in a memory.
+ * @param string The user input to be store in the Node
+ * @param index The index of the input
+ */
 void PUSH_STRING(char *string, int index) {
     PUSH_TRACE("PUSH_STRING");
     struct STRING_NODE *tnode;
@@ -198,7 +205,7 @@ void PUSH_STRING(char *string, int index) {
     tnode->index = index;
     if (LL_TOP == NULL) {
         LL_TOP = tnode;
-	LL_TOP->next = NULL;
+        LL_TOP->next = NULL;
     } else {
         tnode->next = LL_TOP;
         LL_TOP = tnode;
@@ -207,6 +214,12 @@ void PUSH_STRING(char *string, int index) {
 }
 /* ------------------------------*/
 /* function POP_STRING */
+/**
+ * The function POP_STRING is used to remove the
+ * STRING_NODE at the top of the string.
+ * The removed node is freed and the node
+ * that followed it becomes the top of the stack
+ */
 void POP_STRING() {
     PUSH_TRACE("POP_STRING");
     struct STRING_NODE *tnode;
@@ -218,18 +231,28 @@ void POP_STRING() {
 
 /* --------------------------------*/
 /* function FREE_LL_STRING */
+/**
+ * FREE_LL_STRING is a function that will free the entire
+ * Linked List of STRING_NODE by calling POP_STRING in a
+ * loop while the pointer to the top of the Linked list
+ * is not null.
+ */
 
 void FREE_LL_STRING() {
     PUSH_TRACE("FREE_LL_STRING");
     while (LL_TOP != NULL) {
         POP_STRING();
     }
-   // POP_STRING();
     POP_TRACE();
 }
 
 /* --------------------------------*/
 /* function Print_STRING */
+/**
+ * The function print_String is use to recursively print the Linked List
+ * of STRING_NODE.
+ * @param node The STRING_NODE parameter is used to traverse the Linked List
+ */
 void print_String(struct STRING_NODE *node) {
     PUSH_TRACE("print_String");
     if (node->next != NULL) {
@@ -239,13 +262,13 @@ void print_String(struct STRING_NODE *node) {
     POP_TRACE();
 }
 
-void ADD_SPACE(char** array, int row){
-    PUSH_TRACE("ADD_SPACE");
-    array = realloc(array, sizeof(char *) * row);
-    POP_TRACE();
-}
-
-void FREE_STRING_IN_ARRAY(char** array, int index){
+/**
+ * The FREE_STRING_IN_ARRAY function free all the char* inside the
+ * main char** one by one.
+ * @param array the char** containing the char* that needs to be freed
+ * @param index the number of char* inside the char**
+ */
+void FREE_STRING_IN_ARRAY(char **array, int index) {
     PUSH_TRACE("FREE_STRING_IN_ARRAY");
     for (int i = 0; i < index; i++) {
         free(array[i]);
@@ -255,48 +278,51 @@ void FREE_STRING_IN_ARRAY(char** array, int index){
 
 // ------------------------------------------
 // function make_extend_array
-// Example of how the memory trace is done
-// This function is intended to demonstrate how memory usage tracing of malloc and free is done
 //Please read: On Discord, Channel a4,on 10/14/2022 at 13:33, ProfB Mentioned 
 //"Else, you can assume commands will have a 100 character limit (they wont be tested on more than 100 chars). 
 // The bash shell cmd line also has a limit to the length of the commands it can read"
 //This is why size_T buff is set to 100
+/**
+ * The make_extend_array is a function that takes the user input
+ * and store them in a dynamically allocated array
+ * The array start with a size of 10 char* and the
+ * size gets increase by 10 everytime that we reach
+ * the limit previously set (see the ROW variable)
+ */
 void make_extend_array() {
     PUSH_TRACE("make_extend_array");
-    size_t buff = 100;
-    char **array = NULL;
-    int ROW = 10;
-    int index = 0;
-    char *input = (char *) malloc(sizeof(char) * buff);
-    array = (char **) malloc(sizeof(char *) * ROW);
+    size_t buff = 100;//See the comment above
+    char **array = NULL; //The array
+    int ROW = 10; // The number of row in the array
+    int index = 0;// The number of input in the array
+    char *input = (char *) malloc(sizeof(char) * buff); // The char* use to read the user input
+    array = (char **) malloc(sizeof(char *) * ROW); // Allocate the space for the array
 
 
     //Read all the input available to store them
     while (getline(&input, &buff, stdin) != -1) {
-        input[strlen(input) - 1] = 0;
-        array[index] = strdup(input);
+        input[strlen(input) - 1] = 0;//Set \n to 0
+        array[index] = strdup(input);//copy the string
         printf("File mem_tracer.c, line %d, function %s allocated new memory segment at address %p to of size %lu\n",
-               __LINE__ - 1, PRINT_TRACE(), array[index], sizeof(char) * buff);
+               __LINE__ - 1, PRINT_TRACE(), array[index], sizeof(char) * buff); //print to the file
 
-        PUSH_STRING(array[index], index);
+        PUSH_STRING(array[index], index);//Push the string in the linked list
+        index++;//increase the number of string stored by 1
 
-        index++;
-        //if the space allocated to store all the string is insufficent
+        //if the space allocated to store all the string is insufficient
         //we need to reallocate the memory
         if (index >= ROW) {
             ROW += 10;
             array = realloc(array, sizeof(char *) * ROW);
-	    //ADD_SPACE(array,ROW);
-	}
+        }
     }//End of While loop
 
-    print_String(LL_TOP);
-    FREE_LL_STRING();
-    //This for loop free all the string stored in the char** array
-    FREE_STRING_IN_ARRAY(array,index);
+    print_String(LL_TOP);//Print the linked list recursively
+    FREE_LL_STRING();//Free the linked list
+    FREE_STRING_IN_ARRAY(array, index);//Free all Char* in array
 
-    free(array);
-    free(input);
+    free(array);//Free the char**
+    free(input);//Free the char* used for user input
     POP_TRACE();
     return;
 }//end make_extend_array
@@ -306,7 +332,7 @@ void make_extend_array() {
 // function main
 int main() {
     int fd;
-    fd = open("memtrace.out", O_RDWR | O_CREAT | O_TRUNC|O_APPEND, 0777);
+    fd = open("memtrace.out", O_RDWR | O_CREAT | O_TRUNC | O_APPEND, 0777);
     dup2(fd, 1);
     PUSH_TRACE("main");
 
