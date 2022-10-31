@@ -198,13 +198,14 @@ void PUSH_STRING(char *string, int index) {
     tnode->index = index;
     if (LL_TOP == NULL) {
         LL_TOP = tnode;
+	LL_TOP->next = NULL;
     } else {
         tnode->next = LL_TOP;
         LL_TOP = tnode;
     }
     POP_TRACE();
 }
-/* --------------------------------*/
+/* ------------------------------*/
 /* function POP_STRING */
 void POP_STRING() {
     PUSH_TRACE("POP_STRING");
@@ -220,10 +221,10 @@ void POP_STRING() {
 
 void FREE_LL_STRING() {
     PUSH_TRACE("FREE_LL_STRING");
-    while (LL_TOP->next != NULL) {
+    while (LL_TOP != NULL) {
         POP_STRING();
     }
-    POP_STRING();
+   // POP_STRING();
     POP_TRACE();
 }
 
@@ -263,7 +264,7 @@ void FREE_STRING_IN_ARRAY(char** array, int index){
 void make_extend_array() {
     PUSH_TRACE("make_extend_array");
     size_t buff = 100;
-    char **array;
+    char **array = NULL;
     int ROW = 10;
     int index = 0;
     char *input = (char *) malloc(sizeof(char) * buff);
@@ -284,8 +285,9 @@ void make_extend_array() {
         //we need to reallocate the memory
         if (index >= ROW) {
             ROW += 10;
-            ADD_SPACE(array,ROW);
-        }//End of if condition
+            array = realloc(array, sizeof(char *) * ROW);
+	    //ADD_SPACE(array,ROW);
+	}
     }//End of While loop
 
     print_String(LL_TOP);
@@ -293,7 +295,6 @@ void make_extend_array() {
     //This for loop free all the string stored in the char** array
     FREE_STRING_IN_ARRAY(array,index);
 
-    //free the remaining allocated memory space
     free(array);
     free(input);
     POP_TRACE();
